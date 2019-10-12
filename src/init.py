@@ -8,55 +8,72 @@ from ui.questions import Questions
 from obfuscator import obfuscate
 
 
-def initialize(directory, skip_obfuscation, output, parse_libraries):
+def initialize(directory, skip_obfuscation, output, parse_libraries, default_email, skip_upload):
     repo = git.Repo(directory)
     ar = AnalyzeRepo(repo)
     q = Questions()
 
     print('Initialization...')
-    for branch in repo.branches:
-        ar.create_commits_entity_from_branch(branch.name)
-    ar.flag_duplicated_commits()
-    ar.get_commit_stats()
-    r = ar.create_repo_entity(directory)
+    try:
+        if not repo.branches:
+            print('No branches detected, will ignore this repo')
+            os._exit(0)
+        for branch in repo.branches:
+            ar.create_commits_entity_from_branch(branch.name)
+        ar.flag_duplicated_commits()
+        ar.get_commit_stats()
+        r = ar.create_repo_entity(directory)
 
-    # Ask the user if we cannot find remote URL
-    if r.primary_remote_url == '':
-        answer = q.ask_primary_remote_url(r)
+        if not r.original_remotes:
+            print('No remotes detected, will ignore this repo')
+            os._exit(0)  
+        # Ask the user if we cannot find remote URL
+        if r.primary_remote_url == '':
+            answer = q.ask_primary_remote_url(r)
 
-    authors = [(c['name'], c['email']) for _, c in r.contributors.items()]
-    identities = {}
-    identities['user_identity'] = []
-    # In case the repo is empty don't show the question
-    if len(authors) != 0:
-        identities_err = None
-        identities = q.ask_user_identity(authors, identities_err)
-        MAX_LIMIT = 50
-        while len(identities['user_identity']) == 0 or len(identities['user_identity']) > MAX_LIMIT:
-            if len(identities['user_identity']) == 0:
-                identities_err = 'Please select at least one author'
-            if len(identities['user_identity']) > MAX_LIMIT:
-                identities_err = 'You cannot select more than', MAX_LIMIT
+        if not r.contributors.items():
+            print('No authors detected, will ignore this repo')
+            os._exit(0)
+
+        authors = [(c['name'], c['email']) for _, c in r.contributors.items()]
+        identities = {}
+        identities['user_identity'] = []
+        # In case the repo is empty don't show the question
+        if len(authors) != 0:
+            identities_err = None
             identities = q.ask_user_identity(authors, identities_err)
+            MAX_LIMIT = 50
+            while len(identities['user_identity']) == 0 or len(identities['user_identity']) > MAX_LIMIT:
+                if len(identities['user_identity']) == 0:
+                    identities_err = 'Please select at least one author'
+                if len(identities['user_identity']) > MAX_LIMIT:
+                    identities_err = 'You cannot select more than', MAX_LIMIT
+                identities = q.ask_user_identity(authors, identities_err)
 
-    r.local_usernames = identities['user_identity']
+        r.local_usernames = identities['user_identity']
 
-    if parse_libraries:
-        # build authors from the selection
-        al = AnalyzeLibraries(r.commits, authors, repo.working_tree_dir)
-        libs = al.get_libraries()
+        if parse_libraries:
+            # build authors from the selection
+            al = AnalyzeLibraries(r.commits, authors, repo.working_tree_dir)
+            libs = al.get_libraries()
 
-        # combine repo stats with libs used
-        for i in range(len(r.commits)):
-            c = r.commits[i]
-            if c.hash in libs.keys():
-                r.commits[i].libraries = libs[c.hash]
+            # combine repo stats with libs used
+            for i in range(len(r.commits)):
+                c = r.commits[i]
+                if c.hash in libs.keys():
+                    r.commits[i].libraries = libs[c.hash]
 
-    if not skip_obfuscation:
-        r = obfuscate(r)
+        if not skip_obfuscation:
+            r = obfuscate(r)
 
-    er = ExportResult(r)
-    er.export_to_json_interactive(output)
+        er = ExportResult(r)
+        er.export_to_json_interactive(output, skip_upload)
+
+    except KeyboardInterrupt:
+        print ("Shutdown requested...exiting")
+        os._exit(0)
+    except Exception:
+        os._exit(1)
 
 # user_commit - consider only these user commits for extracting the repo information
 # emails - merge these emails with these emails extracted from the repo

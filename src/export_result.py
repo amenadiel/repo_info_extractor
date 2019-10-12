@@ -10,13 +10,13 @@ class ExportResult:
     def __init__(self, data):
         self.data = data
 
-    def export_to_json_interactive(self, file_name, skip_upload=False):
+    def export_to_json_interactive(self, file_name, upload='default'):
         self.dump(file_name)
 
         q = Questions()
-        if skip_upload:
+        if upload == 'skip':
             result = False
-        else 
+        else:
             result = q.query_yes_no(
             'Do you want to upload the result to your profile automatically?')
         if result:

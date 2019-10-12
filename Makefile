@@ -62,10 +62,11 @@ install: install_requirements help
 
 dry:=0
 depth:=1
+upload:='default'
 folder:=$(filter-out $@,$(MAKECMDGOALS))
 collect: 
 	@( \
        source ./.pyenv/bin/activate; \
-	./run.sh --dry=$(dry) --depth=$(depth) --email="$(email)" $(folder) ; \
+	./run.sh --dry=$(dry) --depth=$(depth) --email="$(email)" --upload=$(upload) $(folder) ; \
 	)
 	@exit 0

@@ -8,7 +8,7 @@ from ui.questions import Questions
 from obfuscator import obfuscate
 
 
-def initialize(directory, skip_obfuscation, output, parse_libraries, default_email, skip_upload):
+def initialize(directory, skip_obfuscation, output, parse_libraries, default_email, upload):
     repo = git.Repo(directory)
     ar = AnalyzeRepo(repo)
     q = Questions()
@@ -41,7 +41,7 @@ def initialize(directory, skip_obfuscation, output, parse_libraries, default_ema
         # In case the repo is empty don't show the question
         if len(authors) != 0:
             identities_err = None
-            identities = q.ask_user_identity(authors, identities_err)
+            identities = q.ask_user_identity(authors, identities_err, default_email)
             MAX_LIMIT = 50
             while len(identities['user_identity']) == 0 or len(identities['user_identity']) > MAX_LIMIT:
                 if len(identities['user_identity']) == 0:
@@ -67,7 +67,7 @@ def initialize(directory, skip_obfuscation, output, parse_libraries, default_ema
             r = obfuscate(r)
 
         er = ExportResult(r)
-        er.export_to_json_interactive(output, skip_upload)
+        er.export_to_json_interactive(output, upload)
 
     except KeyboardInterrupt:
         print ("Shutdown requested...exiting")

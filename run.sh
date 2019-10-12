@@ -29,11 +29,6 @@ trap "exitfn" INT
 local_projects() {
   repos=`find $folder -maxdepth $depth  -type d  -wholename "*/.git" -exec dirname {} \;`
   number_of_repos=`echo $repos | wc -w`
-  skip_upload=''
-
-	if [ "$number_of_repos" > 1 ]; then
-    skip_upload='--skip_upload 1'
-  fi
 
   for REPO_PATH in $repos
   do
@@ -44,7 +39,7 @@ local_projects() {
       echo "found repo ${BGREEN}$REPO_NAME${RESET}"
     else
       echo "repo ${BGREEN}$REPO_NAME${RESET} will be saved as ${BCYAN}$FILE_NAME${RESET}"
-      python src/main.py "$REPO_PATH" --output $FILE_NAME --default_email "$email" $skip_upload && wait
+      python src/main.py "$REPO_PATH" --output $FILE_NAME --default_email "$email" --upload $upload && wait
 	  fi
 	  echo " "
   done;
@@ -59,6 +54,7 @@ dry_run=0
 folder="${!#}"
 paramnum=$#
 email=""
+upload='default'
 optspec=":h-:"
 while getopts "$optspec" optchar; do
      case "${optchar}" in
@@ -76,6 +72,11 @@ while getopts "$optspec" optchar; do
                     val=${OPTARG#*=}
                     opt=${OPTARG%=$val}
                     depth=$val
+                    ;;
+                upload=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    upload=$val
                     ;;
                 email=*)
                     val=${OPTARG#*=}
@@ -95,17 +96,19 @@ while getopts "$optspec" optchar; do
             echo -e ""
             echo -e "collect your repos info using: "
             echo -e ""
-            echo -e "    ${GREEN}make collect${RESET} ${BCYAN}<folder>${RESET} ${BBRIGHT}[depth=<depth>] [dry=0|1] [email=user@domain.com]${RESET}"
+            echo -e "    ${GREEN}make collect${RESET} ${BCYAN}<folder>${RESET} ${BBRIGHT}[depth=<depth>] [dry=0|1] [email=user@domain.com] [upload=skip]${RESET}"
             echo -e ""
             echo -e "Examples:"
-            echo -e "  ${GREEN}fab help${RESET}                                  display this help message"
+            echo -e "  ${GREEN}make help${RESET}                                  display this help message"
             echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/my_repo${RESET}                     get info of ${BCYAN}my_repo${RESET}"
-            echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/my_repo${RESET} ${BBRIGHT}email=me@mail.com${RESET}    same as above, but preselect ${BCYAN}me@mail.com${RESET} in author list"
-            echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/projects${RESET} ${BBRIGHT}depth=2${RESET}             get info every repo under ${BCYAN}~/projects${RESET} until a given depth"
-            echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/my_repo${RESET} ${BBRIGHT}dry=1${RESET}                just display repos that will be examined"
+            echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/my_repo${RESET} ${BBRIGHT}email=me@mail.com${RESET}   same as above, but preselect ${BCYAN}me@mail.com${RESET} in author list"
+            echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/projects${RESET} ${BBRIGHT}depth=2${RESET}            get info every repo under ${BCYAN}~/projects${RESET} until a given depth"
+            echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/my_repo${RESET} ${BBRIGHT}dry=1${RESET}               just display repos that will be examined"
+            echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/my_repo${RESET} ${BBRIGHT}upload=skip${RESET}         skip auto upload prompt"
             echo -e ""
             echo -e "Combine them all"
-            echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/projects${RESET} depth=2 dry=1 email=me@mail.com "
+            echo -e "  ${GREEN}make collect${RESET} ${BCYAN}~/projects${RESET} depth=2 dry=1 email=me@mail.com upload=skip"
+            echo ""
             exit 0
             ;;
        

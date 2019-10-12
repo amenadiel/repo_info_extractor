@@ -1,5 +1,9 @@
 import argparse
 from init import initialize
+from pprint import pprint
+from os import *
+from ui.questions import Questions
+
 
 def main():
     parser = argparse.ArgumentParser()
@@ -13,12 +17,27 @@ def main():
                         dest='parse_libraries', help='If true, used libraries will be parsed')
     parser.add_argument('--default_email', default='',
                         dest='default_email', help='If set, commits from this email are preselected on authors list')
-    parser.add_argument('--upload', default='default',
-                        dest='upload', help='If set to "skip", skip the prompt to upload automatically')
-    args = parser.parse_args()
-    print(args.default_email)
-    initialize(args.directory, args.skip_obfuscation, args.output, args.parse_libraries, args.default_email, args.upload)
+    parser.add_argument('--upload', default='defaul',
+                        dest='upload', help="If set to 'skip', don't prompt for automatic upload")
+    try:
+        args = parser.parse_args()
+        
+        folders=args.directory.split('|,|')
+        if len(folders) > 1:
+            q = Questions()
+            repos = q.ask_which_repos(folders)
+            if len(repos['chosen_repos']) > 0:
+                for repo in repos['chosen_repos']:
+                    output=('./%s.json' % (path.basename(repo).replace(' ','_')))
+                    initialize(repo, args.skip_obfuscation, output, args.parse_libraries, args.default_email, args.upload)
+        else:
+            initialize(args.directory, args.skip_obfuscation, args.output, args.parse_libraries, args.default_email, args.upload)
 
+    except KeyboardInterrupt:
+        print ("Shutdown requested...exiting")
+        os._exit(0)
+    except Exception:
+        os._exit(1)
 
 if __name__ == "__main__":
     import multiprocessing

@@ -21,34 +21,6 @@ exitfn () {
     echo; echo 'Interrupted by user!!'
     exit                     
 }
-red() {
-  return "${RED}$1${WHITE}"
-}
-
-trap "exitfn" INT
-local_projects() {
-  repos=`find $folder -maxdepth $depth  -type d  -wholename "*/.git" -exec dirname {} \;`
-  number_of_repos=`echo $repos | wc -w`
-
-  for REPO_PATH in $repos
-  do
-    rm -rf 1
-	  REPO_NAME=`echo $REPO_PATH | sed -e 's/\/$//g' | rev | cut -d'/' -f 1 | rev `  >&2;
-    FILE_NAME="./"$REPO_NAME".json"
-	  if [ "$dry_run" != 0 ]; then
-      echo "found repo ${BGREEN}$REPO_NAME${RESET}"
-    else
-      echo "repo ${BGREEN}$REPO_NAME${RESET} will be saved as ${BCYAN}$FILE_NAME${RESET}"
-      python src/main.py "$REPO_PATH" --output $FILE_NAME --default_email "$email" --upload $upload && wait
-	  fi
-	  echo " "
-  done;
-
-}
-
-#python src/main.py "$REPO_PATH" --output $FILE_NAME
-
-
 depth=1
 dry_run=0
 folder="${!#}"
@@ -56,6 +28,28 @@ paramnum=$#
 email=""
 upload='default'
 optspec=":h-:"
+
+
+
+trap "exitfn" INT
+local_projects() {
+  repos=`find $folder -maxdepth $depth  -type d  -wholename "*/.git" -exec dirname {} \; | sed -e 's/^/|/' -e 's/$/|/g' | tr '\n' ',' `
+  number_of_repos=`echo $repos | tr -cd , | wc -c`
+  repostring=`echo $repos |  sed -e 's/|,$/|/g' -e 's/^|//g' -e 's/|$//g' `
+  
+  echo "Found ${GREEN}$number_of_repos${RESET} repos under ${BCYAN}$folder${RESET}"
+  rm -rf 1
+  if [ $number_of_repos > 1 ]; then
+    python src/main.py "$repostring" --default_email "$email" --upload $upload && wait
+  else
+    REPO_NAME=`echo $REPO_PATH | sed -e 's/\/$//g' | rev | cut -d'/' -f 1 | rev `  >&2;
+    FILE_NAME="./"$REPO_NAME".json"
+    python src/main.py '$REPO_PATH' --output $FILE_NAME --default_email "$email" --upload $upload && wait
+  fi
+  rm -rf 1
+}
+
+
 while getopts "$optspec" optchar; do
      case "${optchar}" in
         -)

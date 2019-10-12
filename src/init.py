@@ -13,7 +13,7 @@ def initialize(directory, skip_obfuscation, output, parse_libraries, default_ema
     ar = AnalyzeRepo(repo)
     q = Questions()
 
-    print('Initialization...')
+    print('Analyzing repo under %s ...' % (directory))
     try:
         if not repo.branches:
             print('No branches detected, will ignore this repo')

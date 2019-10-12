@@ -47,6 +47,27 @@ class Questions:
 
         return prompt(questions)
 
+    def ask_which_repos(self, repos):
+        choices = []
+        for repo in repos:
+            choices.append({
+                'name': repo
+            })
+            
+        message = 'The following repos where found in the given path. \
+            Select which ones you want to analyze (With SPACE you can select more than one)'
+        
+        questions = [
+            {
+                'type': 'checkbox',
+                'name': 'chosen_repos',
+                'message': message,
+                'choices': choices
+            }
+        ]
+
+        return prompt(questions)
+
     def query_yes_no(self, question, default="yes"):
         """Ask a yes/no question via raw_input() and return their answer.
 

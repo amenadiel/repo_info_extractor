@@ -68,5 +68,5 @@ collect:
 	@( \
        source ./.pyenv/bin/activate; \
 	./run.sh --dry=$(dry) --depth=$(depth) --email="$(email)" --upload=$(upload) $(folder) ; \
+	exit 0 ; \
 	)
-	@exit 0

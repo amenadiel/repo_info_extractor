@@ -50,6 +50,7 @@ install_requirements:
 help:
 	@./run.sh -h
 
-install: install_pip install_requirements help
 
- 
+install: install_pip install_requirements
+install:	
+	@./run.sh -h

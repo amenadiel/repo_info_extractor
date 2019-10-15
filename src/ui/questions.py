@@ -22,10 +22,10 @@ class Questions:
 
         return prompt(questions)
 
-    def ask_user_identity(self, authors, err, email=''):
+    def ask_user_identity(self, authors, err, default_email=''):
         choices = []
         for name, email in authors:
-            checked = email == email
+            checked = email == default_email
             choices.append({
                 'name': name + ' -> ' + email,
                 'checked': checked

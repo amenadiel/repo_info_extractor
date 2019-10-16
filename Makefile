@@ -50,7 +50,19 @@ install_requirements:
 help:
 	@./run.sh -h
 
+install: install_pip install_requirements help
 
-install: install_pip install_requirements
-install:	
-	@./run.sh -h
+ %:  
+	@:
+
+
+dry:=0
+depth:=1
+upload:='default'
+folder:=$(filter-out $@,$(MAKECMDGOALS))
+collect: 
+	@( \
+       source ./.pyenv/bin/activate; \
+	./run.sh --dry=$(dry) --depth=$(depth) --email="$(email)" --upload=$(upload) $(folder) ; \
+	exit 0 ; \
+	)

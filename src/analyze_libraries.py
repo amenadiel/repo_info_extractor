@@ -27,8 +27,8 @@ class AnalyzeLibraries:
         
         now = datetime.now()
         print("[%s] Copying the repository to a temporary location, this can take a while..." % now.strftime("%d/%m/%Y %H:%M:%S"))	
-
-        shutil.copytree(self.basedir, tmp_repo_path, symlinks=True)
+        print("from: %s to %s " % (self.basedir, tmp_repo_path))
+        shutil.copytree(self.basedir+'/.git', tmp_repo_path+'/.git', symlinks=True)
         now = datetime.now()
         print("[%s] Finished copying the repository" % now.strftime("%d/%m/%Y %H:%M:%S"))	
 

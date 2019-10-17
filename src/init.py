@@ -6,16 +6,20 @@ from analyze_repo import AnalyzeRepo
 from analyze_libraries import AnalyzeLibraries
 from ui.questions import Questions
 from obfuscator import obfuscate
+import logging
+
+
+FORMAT = '[%(asctime)s] %(message)s'
+logging.basicConfig(format=FORMAT, datefmt="%d/%m/%Y %H:%M:%S", level=logging.INFO)
 
 
 def initialize(directory, skip_obfuscation, output, parse_libraries, email, skip_upload):
-    repo = git.Repo(directory)
-    ar = AnalyzeRepo(repo)
-    q = Questions()
-
-    print('Analyzing repo under %s ...' % (directory))
-
     try:
+        print('Analyzing repo under %s ...' % (directory))
+        repo = git.Repo(directory)
+        ar = AnalyzeRepo(repo)
+        q = Questions()
+
         # Stop parsing if there are no branches
         if not repo.branches:
             print('No branches detected, will ignore this repo')
@@ -77,7 +81,8 @@ def initialize(directory, skip_obfuscation, output, parse_libraries, email, skip
     except KeyboardInterrupt:
         print ("Cancelled by user")
         return
-    except Exception:
+    except Exception as e:
+        logging.exception(e)
         return
 
 # user_commit - consider only these user commits for extracting the repo information

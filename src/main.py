@@ -1,8 +1,12 @@
 import argparse
 from init import initialize
-from pprint import pprint
 import os
 from ui.questions import Questions
+import logging
+
+FORMAT = '[%(asctime)s] %(message)s'
+logging.basicConfig(format=FORMAT, datefmt="%d/%m/%Y %H:%M:%S", level=logging.INFO)
+
 
 
 def main():
@@ -31,15 +35,16 @@ def main():
                 repo_name = os.path.basename(repo).replace(' ','_')
                 output=('./%s.json' % (repo_name))
                 initialize(repo, args.skip_obfuscation, output, args.parse_libraries, args.email, args.skip_upload)
-                print('Finished analyzing %s ' % (repo_name))
+                logging.log('Finished analyzing %s ' % (repo_name))
 
         else:
             initialize(args.directory, args.skip_obfuscation, args.output, args.parse_libraries, args.email, args.skip_upload)
-
+            logging.log('Finished analyzing %s ' % (args.directory))
     except KeyboardInterrupt:
         print ("Cancelled by user")
         os._exit(0)
-    except Exception:
+    except Exception as e:
+        logging.exception(e)
         os._exit(0)
 
 if __name__ == "__main__":

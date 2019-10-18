@@ -3,6 +3,11 @@ from init import initialize
 import os
 from ui.questions import Questions
 import logging
+from pprint import pprint
+from pathlib import Path,PurePosixPath
+
+for filename in Path('src').glob('**/*.c'):
+    print(filename)
 
 FORMAT = '[%(asctime)s] %(message)s'
 logging.basicConfig(format=FORMAT, datefmt="%d/%m/%Y %H:%M:%S", level=logging.INFO)
@@ -23,23 +28,35 @@ def main():
                         dest='email', help='If set, commits from this email are preselected on authors list')
     parser.add_argument('--skip_upload',  default=False, action='store_true',
                         dest='skip_upload', help="If true, don't prompt for inmediate upload")
+    parser.add_argument('--depth',  default=1,  dest='depth', help="Search repos recursively up to this depth from <directory>")
+    
     try:
         args = parser.parse_args()
-        folders=args.directory.split('|,|')
+        folders=[]
+        directory=Path(args.directory)
+        if(args.depth!=1):
+            for folder in directory.glob('*/*.git'):
+                folders.append('%s' % (folder.parent))
+        
+        output=args.output.replace('.json','')
         if len(folders) > 1:
+            os.makedirs('%s' %(directory.name), mode=0o777, exist_ok=True)
             q = Questions()
             repos = q.ask_which_repos(folders)
             if 'chosen_repos' not in repos or len(repos['chosen_repos']) == 0:
                 print("No repos chosen, will exit")
+                os._exit(0)
             for repo in repos['chosen_repos']:
                 repo_name = os.path.basename(repo).replace(' ','_')
-                output=('./%s.json' % (repo_name))
+                output=('./%s/%s.json' % (directory.name, repo_name))
                 initialize(repo, args.skip_obfuscation, output, args.parse_libraries, args.email, args.skip_upload)
-                logging.log('Finished analyzing %s ' % (repo_name))
+                logging.info('Finished analyzing %s ' % (repo_name))
 
         else:
-            initialize(args.directory, args.skip_obfuscation, args.output, args.parse_libraries, args.email, args.skip_upload)
-            logging.log('Finished analyzing %s ' % (args.directory))
+            output=('./%s.json' % (output))
+            initialize(args.directory, args.skip_obfuscation,  output, args.parse_libraries, args.email, args.skip_upload)
+            pprint(args)
+            #logging.log('Finished analyzing %s ' % (directory))
     except KeyboardInterrupt:
         print ("Cancelled by user")
         os._exit(0)

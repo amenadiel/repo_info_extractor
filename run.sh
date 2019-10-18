@@ -21,17 +21,41 @@ exitfn () {
     echo; echo 'Interrupted by user!!'
     exit                     
 }
-depth=1
-dry_run=0
-folder="${!#}"
-paramnum=$#
-email=""
-upload='default'
-optspec=":h-:"
-other_args=''
-
 
 trap "exitfn" INT
+
+parameter_definition() {
+  echo -e " ${BBRIGHT} $1 ${RESET}    $2  $3"
+}
+
+print_help() {
+  echo -e ""
+  echo -e "collect your repos info using: "
+  echo -e ""
+  echo -e " ${GREEN}./run.sh${RESET} [--help | options]  ${BCYAN}<folder>${RESET} "
+
+  echo -e "Parameters:"
+  echo -e "   ${BCYAN}folder${RESET}            local folder of the repo to analyze ${BBRIGHT}required${RESET}"
+  
+  echo -e "Options:";
+  
+  parameter_definition "--help                " "display this help message";echo
+  parameter_definition "--output=<output_file>" "json output file, defaults to ${BBRIGHT}$output.json${RESET}"
+  parameter_definition "--dry                 " "display repos found in ${BCYAN}<folder>${RESET}, then exit"
+  parameter_definition "--email=<email>       " "preselect ${BBRIGHT}<email>${RESET} in author list"
+  parameter_definition "--skip_upload         " "skip upload prompt after collecting repo info"
+  parameter_definition "--parse_libraries     " "besides file extension, infer language from commit contents"
+  parameter_definition "--depth=<number>      " "search recursively <number> levels from ${BCYAN}<folder>${RESET}"
+  
+  echo;echo -e " ${BBRIGHT} *${RESET} (if more than one repo is found, results go to ${BBRIGHT}<output>/<repo_folder>.json${BBRIGHT}"
+  
+  echo;echo -e "Combine them all (other options available in ${GREEN}main.py${RESET} will be forwared untouched). Eg:";echo
+  echo -e "${GREEN}./run.sh ${RESET} --output=huge_repo.json --depth=2 --email=me@mail.com --skip_upload  ${BCYAN}~/projects${RESET}"
+  echo -e "${GREEN}./run.sh ${RESET} --output=result_folder --parse_libraries  ${BCYAN}~/projects${RESET}"
+
+  echo ""
+}
+
 
 
 local_projects() {
@@ -63,12 +87,20 @@ local_projects() {
   #repostring=`printf "%s➕" "${concatenated_repos[@]}" | sed -e 's/➕$//g' `
   repostring=`printf "%s|,|" "${concatenated_repos[@]}" | sed -e 's/|,|$//g' `
 
-  python src/main.py $other_args "$repostring" ;\
+  python src/main.py --output=$output $other_args "$repostring" ;\
   wait ;\
   return
  
 }
-
+depth=1
+dry_run=0
+folder="${!#}"
+paramnum=$#
+email=""
+upload='default'
+optspec=":h-:"
+other_args=''
+output='repo_data'
 while getopts "$optspec" optchar; do
      case "${optchar}" in
         -)
@@ -81,30 +113,22 @@ while getopts "$optspec" optchar; do
                     opt=${OPTARG%=$val}
                     depth=$val
                     ;;
+
+                output=*)
+                    val=${OPTARG#*=}
+                    opt=${OPTARG%=$val}
+                    output=$val
+                    ;;
+                help)
+                    print_help
+                    exit 0
+                    ;;
                 *)
                     other_args="$other_args --$OPTARG"
                     ;;
             esac;;
         h)
-            echo -e ""
-            echo -e "collect your repos info using: "
-            echo -e ""
-            echo -e " ${GREEN}./run.sh${RESET} [${BBRIGHT}--dry${RESET}] [${BBRIGHT}--depth=2${RESET}] [${BBRIGHT}--email=user@domain.com${RESET}] [${BBRIGHT}--skip_upload${RESET}] ${RESET} ${BCYAN}<folder>${RESET} "
-            echo -e ""
-            echo -e "Examples:"
-            echo -e "${GREEN}./run.sh help${RESET}                               display this help message";echo
-            echo -e "${GREEN}./run.sh${RESET} ${BCYAN}~/my_repo${RESET}                   parse info of ${BCYAN}my_repo${RESET}"
-            echo -e "${GREEN}./run.sh${RESET} ${BBRIGHT}--dry${RESET}  ${BCYAN}~/my_repo${RESET}            just display repos that would be examined"
-            echo -e "${GREEN}./run.sh${RESET} ${BBRIGHT}--skip_upload${RESET}  ${BCYAN}~/my_repo${RESET}    skip auto upload prompt"
-            echo -e "${GREEN}./run.sh${RESET} --email=${BBRIGHT}me@mail.com${RESET} ${BCYAN}~/repo${RESET}  preselect ${BCYAN}me@mail.com${RESET} in author list"
-            
-            echo; echo -e "${GREEN}./run.sh${RESET} ${BBRIGHT}--depth=2${RESET}  ${BCYAN}~/projects${RESET}        sarch recursively N levels from ${BCYAN}~/projects${RESET}"
-            echo -e "               (this option replaces the ${BRIGHT}--output${RESET} parameter with folder names)"
-            echo -e ""
-            echo -e "Combine them all (options available in ${GREEN}main.py${RESET} will be forwared untouched)";echo
-            echo -e "${GREEN}./run.sh ${RESET} --depth=2 --parse_libraries --email=me@mail.com --skip_upload  ${BCYAN}~/projects${RESET}"
-
-            echo ""
+            print_help
             exit 0
             ;;
        

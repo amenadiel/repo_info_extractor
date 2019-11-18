@@ -10,7 +10,7 @@ from language.loader import load as load_language
 from language.detect_language import supported_languages
 from datetime import datetime
 import logging
-
+from pprint import pprint
 
 FORMAT = '[%(asctime)s] %(message)s'
 logging.basicConfig(format=FORMAT, datefmt="%d/%m/%Y %H:%M:%S", level=logging.INFO)
@@ -47,7 +47,7 @@ class AnalyzeLibraries:
             prog = 0
             total = len(commits)
             total_extracted_libs = 0
-
+            found_libs={}
             for commit in commits:
                 libs_in_commit = {}
                 files = [os.path.join(tmp_repo_path, x.file_name)
@@ -56,6 +56,9 @@ class AnalyzeLibraries:
                     # we have extensions now, filter the list to only files with those extensions
                     lang_files = list(filter(lambda x: pathlib.Path(
                         x).suffix[1:].lower() in extensions, files))
+                    
+
+                    
                     if lang_files:
                         # if we go to this point, there were files modified in the language we support
                         # check out the commit in our temporary branch
@@ -70,11 +73,21 @@ class AnalyzeLibraries:
                             extracted_libs = parser.extract_libraries(lang_files)
                             total_extracted_libs+=len(extracted_libs)
                             libs_in_commit[lang].extend(extracted_libs)
+                            
 
                 prog += 1
                 progress(prog, total, 'Analyzing libraries')
                 if libs_in_commit:
+                    for lang, libs in libs_in_commit.items():
+                        if lang not in found_libs:
+                            found_libs[lang]={}
+                        for lib in libs:
+                            if lib not in found_libs[lang].keys():
+                                found_libs[lang][lib]=0
+                            found_libs[lang][lib]+=1
+                            
                     res[commit.hash] = libs_in_commit
+            pprint(found_libs)
 
             shutil.rmtree(tmp_repo_path)
             logging.info("Finished Analyzing libraries. %d files matched known libraries" % (total_extracted_libs))

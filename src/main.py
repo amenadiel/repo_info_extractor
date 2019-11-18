@@ -55,8 +55,7 @@ def main():
         else:
             output=('./%s.json' % (output))
             initialize(args.directory, args.skip_obfuscation,  output, args.parse_libraries, args.email, args.skip_upload)
-            pprint(args)
-            #logging.log('Finished analyzing %s ' % (directory))
+
     except KeyboardInterrupt:
         print ("Cancelled by user")
         os._exit(0)

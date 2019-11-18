@@ -56,6 +56,6 @@ folder:=$(filter-out $@,$(MAKECMDGOALS))
 collect: 
 	@( \
        source ./.pyenv/bin/activate; \
-	./run.sh --dry=$(dry) --depth=$(depth) --email="$(email)" --upload=$(upload) $(folder) ; \
+	echo "./run.sh --dry=$(dry) --depth=$(depth) --email="$(email)" --upload=$(upload) $(folder)" ; \
 	exit 0 ; \
 	)
